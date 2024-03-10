@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
+	"pokedex-cli/internal/utils/myAxios"
 )
 
 // some fields are omitted
@@ -42,23 +41,10 @@ type AvailableMove = NamedAPIResource
 func GetPokemonMoves(input string) ([]AvailableMove, error) {
 	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", input)
 
-	response, err := http.Get(url)
-	if err != nil {
-		return nil, errors.New("failed to fetch data from the URL")
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode > 299 {
-		return nil, errors.New("failed to fetch Pokemon: " + fmt.Sprint(response.StatusCode))
-	}
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, errors.New("failed to read the response body - " + err.Error())
-	}
+	data, err := myAxios.GetRequest(url)
 
 	var pokemon Pokemon
-	err = json.Unmarshal(body, &pokemon)
+	err = json.Unmarshal(data, &pokemon)
 	if err != nil {
 		return nil, errors.New("failed to unmarshal JSON - " + err.Error())
 	}
