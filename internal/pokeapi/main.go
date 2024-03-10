@@ -20,7 +20,8 @@ type Pokemon struct {
 }
 
 type PokemonMove struct {
-	Move NamedAPIResource `json:"move"`
+	Move                NamedAPIResource     `json:"move"`
+	VersionGroupDetails []PokemonMoveVersion `json:"version_group_details"`
 }
 
 type PokemonDetailedMove struct {
@@ -28,34 +29,50 @@ type PokemonDetailedMove struct {
 	Accuracy int    `json:"accuracy"`
 }
 
-func GetPokemon(input string) (Pokemon, error) {
+type PokemonMoveVersion struct {
+	MoveLearnMethod NamedAPIResource `json:"move_learn_method"`
+	VersionGroup    NamedAPIResource `json:"version_group"`
+	LevelLearnedAt  int              `json:"level_learned_at"`
+}
+
+var GameVersionGroup = "red-blue"
+
+type AvailableMove = NamedAPIResource
+
+func GetPokemonMoves(input string) ([]AvailableMove, error) {
 	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", input)
 
 	response, err := http.Get(url)
 	if err != nil {
-		return Pokemon{}, errors.New("failed to fetch data from the URL")
+		return nil, errors.New("failed to fetch data from the URL")
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode > 299 {
-		return Pokemon{}, errors.New("failed to fetch Pokemon: " + fmt.Sprint(response.StatusCode))
+		return nil, errors.New("failed to fetch Pokemon: " + fmt.Sprint(response.StatusCode))
 	}
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return Pokemon{}, errors.New("failed to read the response body")
+		return nil, errors.New("failed to read the response body - " + err.Error())
 	}
 
 	var pokemon Pokemon
 	err = json.Unmarshal(body, &pokemon)
 	if err != nil {
-		return Pokemon{}, errors.New("failed to unmarshal JSON")
+		return nil, errors.New("failed to unmarshal JSON - " + err.Error())
 	}
 
-	fmt.Println("Moves:")
+	var moves []AvailableMove
+
 	for _, move := range pokemon.Moves {
-		fmt.Printf("- %s\n", move.Move.Name)
+		for _, versionGroupDetail := range move.VersionGroupDetails {
+			if versionGroupDetail.VersionGroup.Name == GameVersionGroup {
+				moves = append(moves, move.Move)
+				continue
+			}
+		}
 	}
 
-	return pokemon, nil
+	return moves, nil
 }

@@ -55,7 +55,7 @@ func infoCommand(args []string) error {
 		return errors.New("invalid number of arguments")
 	}
 
-	pokeapi.GetPokemon(args[0])
+	pokeapi.GetPokemonMoves(args[0])
 	return nil
 }
 
