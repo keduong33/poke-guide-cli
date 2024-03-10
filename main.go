@@ -8,8 +8,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"pokedex-cli/internal/cli"
 	"pokedex-cli/internal/pokeapi"
+	"pokedex-cli/internal/utils/cli"
 )
 
 type cliCommand struct {
