@@ -73,10 +73,22 @@ func infoCommand(args []string) error {
 	for index, move := range pokemon.Moves {
 		fmt.Printf("%s%s+%s%s", padding, padding, move.Name, padding)
 		if (index+1)%3 == 0 {
-			fmt.Println("")
+			fmt.Println()
 		}
 
 		if (index+1)%3 != 0 && index == len(pokemon.Moves)-1 {
+			fmt.Println()
+		}
+	}
+
+	fmt.Printf("%sTypes\n", padding)
+	for index, pokemonType := range pokemon.Types {
+		fmt.Printf("%s%s+%s%s", padding, padding, pokemonType.Name, padding)
+		if (index+1)%3 == 0 {
+			fmt.Println()
+		}
+
+		if (index+1)%3 != 0 && index == len(pokemon.Types)-1 {
 			fmt.Println()
 		}
 	}
