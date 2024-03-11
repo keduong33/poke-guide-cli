@@ -82,15 +82,8 @@ func infoCommand(args []string) error {
 	}
 
 	fmt.Printf("%sTypes\n", padding)
-	for index, pokemonType := range pokemon.Types {
-		fmt.Printf("%s%s+%s%s", padding, padding, pokemonType.Name, padding)
-		if (index+1)%3 == 0 {
-			fmt.Println()
-		}
-
-		if (index+1)%3 != 0 && index == len(pokemon.Types)-1 {
-			fmt.Println()
-		}
+	for _, pokemonType := range pokemon.Types {
+		fmt.Printf("%s%s+%s%s\n", padding, padding, pokemonType.Name, padding)
 	}
 
 	return nil
