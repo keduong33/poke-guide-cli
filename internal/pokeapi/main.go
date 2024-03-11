@@ -12,6 +12,7 @@ var GameVersionGroup = "red-blue"
 type Pokemon struct {
 	Name  string
 	Moves []Move
+	Types []Type
 }
 
 type Move struct {
@@ -19,24 +20,34 @@ type Move struct {
 	Url  string
 }
 
-func GetPokemonMoves(input string) ([]Move, error) {
-	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", input)
+type Type struct {
+	Name string
+	Url  string
+}
+
+func GetPokemon(pokemonName string) (Pokemon, error) {
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", pokemonName)
 
 	data, err := myAxios.GetRequest(url)
 
 	if err != nil {
-		return nil, err
+		return Pokemon{}, err
 	}
 
-	var pokemon ApiPokemon
-	err = json.Unmarshal(data, &pokemon)
+	var apiPokemon ApiPokemon
+	err = json.Unmarshal(data, &apiPokemon)
 	if err != nil {
-		return nil, errors.New("failed to unmarshal JSON - " + err.Error())
+		return Pokemon{}, errors.New("failed to understand JSON - " + err.Error())
 	}
 
-	var moves []Move
+	pokemon := convertApiPokemonToPokemon(apiPokemon)
 
-	for _, move := range pokemon.Moves {
+	return pokemon, nil
+}
+
+func convertApiPokemonToPokemon(apiPokemon ApiPokemon) Pokemon {
+	var moves []Move
+	for _, move := range apiPokemon.Moves {
 		for _, versionGroupDetail := range move.VersionGroupDetails {
 			if versionGroupDetail.VersionGroup.Name == GameVersionGroup {
 				moves = append(moves, Move{Name: move.Move.Name, Url: move.Move.Url})
@@ -45,5 +56,15 @@ func GetPokemonMoves(input string) ([]Move, error) {
 		}
 	}
 
-	return moves, nil
+	var types []Type
+
+	for _, pokemonType := range apiPokemon.Types {
+		types = append(types, Type{Name: pokemonType.Type.Name, Url: pokemonType.Type.Url})
+	}
+
+	return Pokemon{
+		Name:  apiPokemon.Name,
+		Moves: moves,
+		Types: types,
+	}
 }

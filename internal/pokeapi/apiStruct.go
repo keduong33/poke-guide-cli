@@ -12,6 +12,7 @@ type ApiNamedAPIResource struct {
 type ApiPokemon struct {
 	Name  string           `json:"name"`
 	Moves []ApiPokemonMove `json:"moves"`
+	Types []ApiPokemonType `json:"types"`
 }
 
 type ApiPokemonMove struct {
@@ -19,7 +20,7 @@ type ApiPokemonMove struct {
 	VersionGroupDetails []ApiPokemonMoveVersion `json:"version_group_details"`
 }
 
-type PokemonDetailedMove struct {
+type ApiPokemonDetailedMove struct {
 	Name     string `json:"name"`
 	Accuracy int    `json:"accuracy"`
 }
@@ -28,4 +29,9 @@ type ApiPokemonMoveVersion struct {
 	MoveLearnMethod ApiNamedAPIResource `json:"move_learn_method"`
 	VersionGroup    ApiNamedAPIResource `json:"version_group"`
 	LevelLearnedAt  int                 `json:"level_learned_at"`
+}
+
+type ApiPokemonType struct {
+	Slot int                 `json:"slot"`
+	Type ApiNamedAPIResource `json:"type"`
 }
