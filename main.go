@@ -8,8 +8,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"pokedex-cli/internal/cli"
 	"pokedex-cli/internal/pokeapi"
+	"pokedex-cli/internal/utils/cli"
 )
 
 type cliCommand struct {
@@ -43,11 +43,16 @@ func versusCommand(args []string) error {
 
 	attacker, defender := args[0], args[1]
 
-	err := pokeapi.Versus(attacker, defender)
+	guide, err := pokeapi.Versus(attacker, defender)
 
 	if err != nil {
 		return errors.New("something wrong")
 	}
+
+	for _, g := range guide {
+		fmt.Printf("%v\n", g)
+	}
+
 	return nil
 }
 func infoCommand(args []string) error {
@@ -55,7 +60,32 @@ func infoCommand(args []string) error {
 		return errors.New("invalid number of arguments")
 	}
 
-	pokeapi.GetPokemon(args[0])
+	pokemon, err := pokeapi.GetPokemon(args[0])
+
+	if err != nil {
+		return err
+	}
+
+	padding := strings.Repeat(" ", 4)
+
+	fmt.Println(pokemon.Name)
+	fmt.Printf("%sMoves\n", padding)
+	for index, move := range pokemon.Moves {
+		fmt.Printf("%s%s+%s%s", padding, padding, move.Name, padding)
+		if (index+1)%3 == 0 {
+			fmt.Println()
+		}
+
+		if (index+1)%3 != 0 && index == len(pokemon.Moves)-1 {
+			fmt.Println()
+		}
+	}
+
+	fmt.Printf("%sTypes\n", padding)
+	for _, pokemonType := range pokemon.Types {
+		fmt.Printf("%s%s+%s%s\n", padding, padding, pokemonType.Name, padding)
+	}
+
 	return nil
 }
 

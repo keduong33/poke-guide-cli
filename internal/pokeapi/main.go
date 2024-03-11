@@ -4,58 +4,67 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
+	"pokedex-cli/internal/utils/myAxios"
 )
 
-// some fields are omitted
-type NamedAPIResource struct {
-	Name string `json:"name"`
-	Url  string `json:"url"`
-}
+var GameVersionGroup = "red-blue"
 
 type Pokemon struct {
-	Name  string        `json:"name"`
-	Moves []PokemonMove `json:"moves"`
+	Name  string
+	Moves []Move
+	Types []Type
 }
 
-type PokemonMove struct {
-	Move NamedAPIResource `json:"move"`
+type Move struct {
+	Name string
+	Url  string
 }
 
-type PokemonDetailedMove struct {
-	Name     string `json:"name"`
-	Accuracy int    `json:"accuracy"`
+type Type struct {
+	Name string
+	Url  string
 }
 
-func GetPokemon(input string) (Pokemon, error) {
-	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", input)
+func GetPokemon(pokemonName string) (Pokemon, error) {
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", pokemonName)
 
-	response, err := http.Get(url)
+	data, err := myAxios.GetRequest(url)
+
 	if err != nil {
-		return Pokemon{}, errors.New("failed to fetch data from the URL")
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode > 299 {
-		return Pokemon{}, errors.New("failed to fetch Pokemon: " + fmt.Sprint(response.StatusCode))
+		return Pokemon{}, err
 	}
 
-	body, err := io.ReadAll(response.Body)
+	var apiPokemon ApiPokemon
+	err = json.Unmarshal(data, &apiPokemon)
 	if err != nil {
-		return Pokemon{}, errors.New("failed to read the response body")
+		return Pokemon{}, errors.New("failed to understand JSON - " + err.Error())
 	}
 
-	var pokemon Pokemon
-	err = json.Unmarshal(body, &pokemon)
-	if err != nil {
-		return Pokemon{}, errors.New("failed to unmarshal JSON")
-	}
-
-	fmt.Println("Moves:")
-	for _, move := range pokemon.Moves {
-		fmt.Printf("- %s\n", move.Move.Name)
-	}
+	pokemon := convertApiPokemonToPokemon(apiPokemon)
 
 	return pokemon, nil
+}
+
+func convertApiPokemonToPokemon(apiPokemon ApiPokemon) Pokemon {
+	var moves []Move
+	for _, move := range apiPokemon.Moves {
+		for _, versionGroupDetail := range move.VersionGroupDetails {
+			if versionGroupDetail.VersionGroup.Name == GameVersionGroup {
+				moves = append(moves, Move{Name: move.Move.Name, Url: move.Move.Url})
+				continue
+			}
+		}
+	}
+
+	var types []Type
+
+	for _, pokemonType := range apiPokemon.Types {
+		types = append(types, Type{Name: pokemonType.Type.Name, Url: pokemonType.Type.Url})
+	}
+
+	return Pokemon{
+		Name:  apiPokemon.Name,
+		Moves: moves,
+		Types: types,
+	}
 }

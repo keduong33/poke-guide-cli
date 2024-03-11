@@ -5,7 +5,7 @@ import "fmt"
 func Versus(attacker, defender string) error {
 	fmt.Println(attacker, defender)
 
-	GetPokemon(attacker)
+	attackerMoves, err := GetPokemonMoves(attacker)
 
 	return nil
 }
