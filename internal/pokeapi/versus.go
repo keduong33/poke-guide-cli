@@ -6,6 +6,7 @@ import (
 
 type ConsolidatedDamageGuide struct {
 	MovesAgainstDefender []Move
+	MovesAgainstAttacker []Move
 }
 
 type TypeSet map[string]Type
@@ -78,20 +79,32 @@ func getEffectiveMovesAgainst(pokemonTypes []Type) (MoveSet, error) {
 	return effectiveMoves, nil
 }
 
-func GetDamageGuide(attacker, defender Pokemon) (ConsolidatedDamageGuide, error) {
+func getMoveAgainstThePokemon(attacker, defender Pokemon) ([]Move, error) {
 	allMovesAgainstDefender, err := getEffectiveMovesAgainst(defender.Types)
-
 	if err != nil {
-		return ConsolidatedDamageGuide{}, err
+		return nil, err
 	}
 
 	movesAgainstDefender := findCommonMoves(allMovesAgainstDefender, attacker.Moves)
 
-	for _, move := range movesAgainstDefender {
-		println(move.Name)
+	return movesAgainstDefender, nil
+}
+
+func GetDamageGuide(attacker, defender Pokemon) (ConsolidatedDamageGuide, error) {
+
+	movesAgainstDefender, err := getMoveAgainstThePokemon(attacker, defender)
+
+	if err != nil {
+		return ConsolidatedDamageGuide{}, nil
 	}
 
-	return ConsolidatedDamageGuide{movesAgainstDefender}, nil
+	movesAgainstAttacker, err := getMoveAgainstThePokemon(defender, attacker)
+
+	if err != nil {
+		return ConsolidatedDamageGuide{}, nil
+	}
+
+	return ConsolidatedDamageGuide{movesAgainstDefender, movesAgainstAttacker}, nil
 }
 
 func Versus(attackerPokemon, defenderPokemon string) (ConsolidatedDamageGuide, error) {

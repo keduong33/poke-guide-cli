@@ -54,6 +54,11 @@ func versusCommand(args []string) error {
 		fmt.Printf("  -%s\n", move.Name)
 	}
 
+	fmt.Println("You are vulnerable to these 2xDmg attacks")
+	for _, move := range guide.MovesAgainstAttacker {
+		fmt.Printf("  -%s\n", move.Name)
+	}
+
 	return nil
 }
 func infoCommand(args []string) error {
