@@ -79,7 +79,7 @@ func convertApiPokemonToPokemon(apiPokemon ApiPokemon) Pokemon {
 		for _, versionGroupDetail := range move.VersionGroupDetails {
 			if versionGroupDetail.VersionGroup.Name == GameVersionGroup {
 				moves = append(moves, Move{Name: move.Move.Name, Url: move.Move.Url})
-				continue
+				break
 			}
 		}
 	}
