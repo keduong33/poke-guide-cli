@@ -48,7 +48,7 @@ func GetPokemon(pokemonName string) (Pokemon, error) {
 	var apiPokemon ApiPokemon
 	err = json.Unmarshal(data, &apiPokemon)
 	if err != nil {
-		return Pokemon{}, errors.New("failed to understand JSON - " + err.Error())
+		return Pokemon{}, utils.CreateJsonReadError(err)
 	}
 
 	pokemon := convertApiPokemonToPokemon(apiPokemon)
