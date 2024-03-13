@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"pokedex-cli/internal/utils"
 	"pokedex-cli/internal/utils/myAxios"
 )
 
@@ -15,18 +16,28 @@ type Pokemon struct {
 	Types []Type
 }
 
-type Move struct {
+type SimplifiedInfo struct {
 	Name string
 	Url  string
 }
+type Move SimplifiedInfo
+type Type SimplifiedInfo
 
-type Type struct {
-	Name string
-	Url  string
+func validatePokemonName(name string) (string, error) {
+	if name == "" {
+		return "", errors.New("pokemon's name cannot be empty")
+	}
+	return name, nil
 }
 
 func GetPokemon(pokemonName string) (Pokemon, error) {
-	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", pokemonName)
+	validatedName, err := validatePokemonName(pokemonName)
+
+	if err != nil {
+		return Pokemon{}, err
+	}
+
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", validatedName)
 
 	data, err := myAxios.GetRequest(url)
 
@@ -43,6 +54,23 @@ func GetPokemon(pokemonName string) (Pokemon, error) {
 	pokemon := convertApiPokemonToPokemon(apiPokemon)
 
 	return pokemon, nil
+}
+
+func GetTypeDetails(pokemonType Type) (ApiPokemonDetailedType, error) {
+	url := pokemonType.Url
+	data, err := myAxios.GetRequest(url)
+
+	var detailType ApiPokemonDetailedType
+
+	if err != nil {
+		return ApiPokemonDetailedType{}, nil
+	}
+
+	if err := json.Unmarshal(data, &detailType); err != nil {
+		return ApiPokemonDetailedType{}, utils.CreateJsonReadError(err)
+	}
+
+	return detailType, nil
 }
 
 func convertApiPokemonToPokemon(apiPokemon ApiPokemon) Pokemon {

@@ -1,90 +1,117 @@
 package pokeapi
 
 import (
-	"encoding/json"
-	"fmt"
-	"pokedex-cli/internal/utils/myAxios"
+	"maps"
 )
 
-type DamageGuide struct {
-	MoveName    string
-	Recommended bool
-	Damage      int
-	Accuracy    int
+type ConsolidatedDamageGuide struct {
+	MovesAgainstDefender []Move
 }
 
-func GetDetailType(pokemonType Type) (ApiPokemonDetailedType, error) {
-	println(pokemonType.Url)
-	var detailType ApiPokemonDetailedType
+type TypeSet map[string]Type
+type MoveSet map[string]Move
 
-	url := pokemonType.Url
-	data, err := myAxios.GetRequest(url)
+func findCommonMoves(allMoves MoveSet, attackerMoves []Move) []Move {
+	validMoves := make([]Move, 0)
 
-	if err != nil {
-		return ApiPokemonDetailedType{}, nil
+	for _, move := range attackerMoves {
+		if allMoves[move.Name] != (Move{}) {
+			validMoves = append(validMoves, move)
+		}
 	}
 
-	json.Unmarshal(data, &detailType)
-
-	fmt.Printf("%v", detailType)
-
-	return ApiPokemonDetailedType{}, nil
+	return validMoves
 }
 
-func GetDamageGuide(moves []Move, targetTypes []Type) ([]DamageGuide, error) {
-	GetDetailType(targetTypes[0])
+func GetAllMovesOfType(pokemonType Type) (MoveSet, error) {
+	detailType, err := GetTypeDetails(pokemonType)
 
-	// var guide []DamageGuide
-	// // for _, move := range moves {
-	// url := fmt.Sprintf("https://pokeapi.co/api/v2/move/%s", moves[0])
-	// data, err := myAxios.GetRequest(url)
+	if err != nil {
+		return MoveSet{}, err
+	}
 
-	// if err != nil {
-	// 	println(err.Error())
-	// 	return nil, err
-	// }
+	allMoves := make(MoveSet)
+	for _, move := range detailType.Moves {
+		allMoves[move.Name] = Move(move)
+	}
 
-	// var apiPokemonDetailMove ApiPokemonDetailMove
-
-	// json.Unmarshal(data, &apiPokemonDetailMove)
-	// println(data)
-
-	// // }
-
-	// return guide, nil
-	return nil, nil
+	return allMoves, nil
 }
 
-func Versus(attackerPokemon, defenderPokemon string) ([]DamageGuide, error) {
-	fmt.Println(attackerPokemon, defenderPokemon)
+func GetWeakAgainstTypes(pokemonType Type) (TypeSet, error) {
+	detailType, err := GetTypeDetails(pokemonType)
 
+	if err != nil {
+		return TypeSet{}, err
+	}
+
+	weakAgainstTypes := make(TypeSet)
+	for _, pokemonType := range detailType.DamageRelations.DoubleDamageFrom {
+		weakAgainstTypes[pokemonType.Name] = Type(pokemonType)
+	}
+
+	return weakAgainstTypes, nil
+}
+
+func getEffectiveMovesAgainst(pokemonTypes []Type) (MoveSet, error) {
+	weakAgainstTypes := make(TypeSet)
+	for _, pokemonType := range pokemonTypes {
+		weakTypes, err := GetWeakAgainstTypes(pokemonType)
+
+		if err != nil {
+			return MoveSet{}, err
+		}
+		maps.Copy(weakAgainstTypes, weakTypes)
+	}
+
+	effectiveMoves := make(MoveSet)
+	for _, weakAgainstType := range weakAgainstTypes {
+		moves, err := GetAllMovesOfType(weakAgainstType)
+
+		if err != nil {
+			return MoveSet{}, err
+		}
+
+		maps.Copy(effectiveMoves, moves)
+	}
+
+	return effectiveMoves, nil
+}
+
+func GetDamageGuide(attacker, defender Pokemon) (ConsolidatedDamageGuide, error) {
+	allMovesAgainstDefender, err := getEffectiveMovesAgainst(defender.Types)
+
+	if err != nil {
+		return ConsolidatedDamageGuide{}, err
+	}
+
+	movesAgainstDefender := findCommonMoves(allMovesAgainstDefender, attacker.Moves)
+
+	for _, move := range movesAgainstDefender {
+		println(move.Name)
+	}
+
+	return ConsolidatedDamageGuide{movesAgainstDefender}, nil
+}
+
+func Versus(attackerPokemon, defenderPokemon string) (ConsolidatedDamageGuide, error) {
 	attacker, err := GetPokemon(attackerPokemon)
 
 	if err != nil {
-		return nil, err
+		return ConsolidatedDamageGuide{}, err
 	}
 
 	defender, err := GetPokemon(defenderPokemon)
 
 	if err != nil {
-		return nil, err
+		return ConsolidatedDamageGuide{}, err
 	}
 
-	attackDamageGuide, err := GetDamageGuide(attacker.Moves, defender.Types)
+	damageGuide, err := GetDamageGuide(attacker, defender)
 
 	if err != nil {
-		return nil, err
+		return ConsolidatedDamageGuide{}, err
 	}
 
-	return attackDamageGuide, nil
-
-	// defenceDamageGuide, err := GetDamageGuide(defender.Moves, attacker.Types)
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// // guide, err := TargetAgainst(attackerMoves, defender)
-
-	// return nil, nil
+	return damageGuide, nil
 }

@@ -49,8 +49,9 @@ func versusCommand(args []string) error {
 		return errors.New("something wrong")
 	}
 
-	for _, g := range guide {
-		fmt.Printf("%v\n", g)
+	fmt.Println("You can use these 2xDmg attacks")
+	for _, move := range guide.MovesAgainstDefender {
+		fmt.Printf("  -%s\n", move.Name)
 	}
 
 	return nil

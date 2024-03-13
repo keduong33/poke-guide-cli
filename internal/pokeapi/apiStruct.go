@@ -39,6 +39,7 @@ type ApiPokemonType struct {
 type ApiPokemonDetailedType struct {
 	Name            string                  `json:"name"`
 	DamageRelations ApiPokemonTypeRelations `json:"damage_relations"`
+	Moves           []ApiNamedAPIResource   `json:"moves"`
 }
 
 type ApiPokemonTypeRelations struct {
