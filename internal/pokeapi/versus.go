@@ -79,7 +79,7 @@ func getEffectiveMovesAgainst(pokemonTypes []Type) (MoveSet, error) {
 	return effectiveMoves, nil
 }
 
-func getMoveAgainstThePokemon(attacker, defender Pokemon) ([]Move, error) {
+func getMovesAgainstThePokemon(attacker, defender Pokemon) ([]Move, error) {
 	allMovesAgainstDefender, err := getEffectiveMovesAgainst(defender.Types)
 	if err != nil {
 		return nil, err
@@ -92,13 +92,13 @@ func getMoveAgainstThePokemon(attacker, defender Pokemon) ([]Move, error) {
 
 func GetDamageGuide(attacker, defender Pokemon) (ConsolidatedDamageGuide, error) {
 
-	movesAgainstDefender, err := getMoveAgainstThePokemon(attacker, defender)
+	movesAgainstDefender, err := getMovesAgainstThePokemon(attacker, defender)
 
 	if err != nil {
 		return ConsolidatedDamageGuide{}, nil
 	}
 
-	movesAgainstAttacker, err := getMoveAgainstThePokemon(defender, attacker)
+	movesAgainstAttacker, err := getMovesAgainstThePokemon(defender, attacker)
 
 	if err != nil {
 		return ConsolidatedDamageGuide{}, nil
